@@ -37,8 +37,7 @@
     <div class="prose">
       <p>Please contact Life Reconnect by entering your information below:</p>
     </div>
-    <!-- To connect this form, replace the # in action="#" with the address from your form service. -->
-    <form id="contact-form" class="form" action="#" method="post">
+    <form id="contact-form" class="form" action="#" method="post" novalidate>
       <div class="field">
         <label for="name">Name <span class="req">(required)</span></label>
         <input id="name" name="name" type="text" autocomplete="name" required>
@@ -51,8 +50,18 @@
         <label for="comment">Comment <span class="req">(required)</span></label>
         <textarea id="comment" name="comment" rows="7" required></textarea>
       </div>
+      <div class="field field--check">
+        <label for="check"><span id="check-question">Answer the sum</span> <span class="req">(required)</span></label>
+        <input id="check" type="text" inputmode="numeric" autocomplete="off" required aria-describedby="check-hint">
+        <p id="check-hint" class="hint">Answering this sum shows you are a person and keeps automated spam out.</p>
+      </div>
+      <div class="hp" aria-hidden="true">
+        <label for="website">Leave this field empty</label>
+        <input id="website" name="_honey" type="text" tabindex="-1" autocomplete="off">
+      </div>
       <button type="submit" class="button">Send message</button>
       <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+      <noscript><p class="form-status form-status--error">This form needs JavaScript turned on in your browser to send.</p></noscript>
     </form>
     <div class="prose">
       <p>Looking forward to connecting with you!</p>
@@ -69,30 +78,79 @@
     (function () {
       var form = document.getElementById('contact-form');
       var status = document.getElementById('form-status');
+      var question = document.getElementById('check-question');
+      var check = document.getElementById('check');
+      var button = form.querySelector('button');
+      var expected;
+
+      function newSum() {
+        var a = 1 + Math.floor(Math.random() * 9);
+        var b = 1 + Math.floor(Math.random() * 9);
+        expected = a + b;
+        question.textContent = 'What is ' + a + ' + ' + b + '?';
+        check.value = '';
+      }
+
+      function say(text, kind) {
+        status.textContent = text;
+        status.className = 'form-status' + (kind ? ' form-status--' + kind : '');
+      }
+
+      // The delivery address is put together here, only after the sum is
+      // answered, so it does not sit in the page for address harvesters.
+      function endpoint() {
+        return 'https://formsubmit.co/ajax/' + ['mark.vanengelen', 'gulo.ai'].join('@');
+      }
+
+      newSum();
+
       form.addEventListener('submit', function (event) {
-        var endpoint = form.getAttribute('action');
         event.preventDefault();
-        if (!endpoint || endpoint === '#') {
-          status.textContent = 'This form is not connected to an inbox yet, so your message was not sent.';
-          status.className = 'form-status form-status--error';
+        var name = form.elements.name.value.trim();
+        var email = form.elements.email.value.trim();
+        var comment = form.elements.comment.value.trim();
+
+        if (!name || !email || !comment) {
+          say('Fill in your name, email and comment before sending.', 'error');
           return;
         }
-        var button = form.querySelector('button');
+        if (!form.elements.email.checkValidity()) {
+          say('Enter a complete email address, like name@example.com.', 'error');
+          form.elements.email.focus();
+          return;
+        }
+        if (parseInt(check.value.trim(), 10) !== expected || !/^\d+$/.test(check.value.trim())) {
+          say('That answer to the sum is not right. Try again.', 'error');
+          check.focus();
+          return;
+        }
+        if (form.elements._honey.value) {
+          return;
+        }
+
         button.disabled = true;
-        status.textContent = 'Sending…';
-        status.className = 'form-status';
-        fetch(endpoint, {
+        say('Sending…');
+        fetch(endpoint(), {
           method: 'POST',
-          body: new FormData(form),
-          headers: { 'Accept': 'application/json' }
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            message: comment,
+            _subject: 'New message from the Life Reconnect website',
+            _template: 'table',
+            _honey: ''
+          })
         }).then(function (response) {
-          if (!response.ok) { throw new Error('Request failed'); }
+          return response.json().then(function (data) {
+            if (!response.ok || String(data.success) !== 'true') { throw new Error('Not sent'); }
+          });
+        }).then(function () {
           form.reset();
-          status.textContent = 'Thank you for your response. ✨';
-          status.className = 'form-status form-status--ok';
+          newSum();
+          say('Thank you for your response. ✨', 'ok');
         }).catch(function () {
-          status.textContent = 'Your message could not be sent. Check your connection and send it again.';
-          status.className = 'form-status form-status--error';
+          say('Your message could not be sent. Try again in a few minutes.', 'error');
         }).then(function () {
           button.disabled = false;
         });
