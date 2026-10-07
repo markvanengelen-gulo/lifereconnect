@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact – Life Reconnect</title>
+  <meta name="description" content="Contact Life Reconnect, grief, trauma and parent counselling in the Kootenays, British Columbia, Canada.">
+  <link rel="canonical" href="https://lifereconnect.ca/contact/">
+  <meta name="theme-color" content="#fdf6e6">
+  <meta property="og:site_name" content="Life Reconnect">
+  <meta property="og:title" content="Contact">
+  <meta property="og:description" content="Contact Life Reconnect, grief, trauma and parent counselling in the Kootenays, British Columbia, Canada.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lifereconnect.ca/contact/">
+  <link rel="preload" href="../assets/fonts/literata-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="masthead">
+    <div class="wrap masthead__inner">
+      <a class="wordmark" href="../">Life Reconnect</a>
+      <nav aria-label="Main">
+        <ul class="nav">
+          <li><a href="../">Home</a></li>
+          <li><a href="../contact/" aria-current="page">Contact</a></li>
+          <li><a href="../rates/">Rates</a></li>
+          <li><a href="../blog/">Blog</a></li>
+          <li><a href="../incense/">Incense</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="band" aria-hidden="true"></div>
+  <main id="content" class="wrap main">
+    <h1>Contact</h1>
+    <div class="prose">
+      <p>Please contact Life Reconnect by entering your information below:</p>
+    </div>
+    <!-- To connect this form, replace the # in action="#" with the address from your form service. -->
+    <form id="contact-form" class="form" action="#" method="post">
+      <div class="field">
+        <label for="name">Name <span class="req">(required)</span></label>
+        <input id="name" name="name" type="text" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="email">Email <span class="req">(required)</span></label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="comment">Comment <span class="req">(required)</span></label>
+        <textarea id="comment" name="comment" rows="7" required></textarea>
+      </div>
+      <button type="submit" class="button">Send message</button>
+      <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+    </form>
+    <div class="prose">
+      <p>Looking forward to connecting with you!</p>
+      <p>Life Reconnect is based in the Kootenays, British Columbia, Canada.</p>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <p>Life Reconnect is based in the Kootenays, British Columbia, Canada.</p>
+      <p><a href="../contact/">Contact Life Reconnect</a></p>
+    </div>
+  </footer>
+  <script>
+    (function () {
+      var form = document.getElementById('contact-form');
+      var status = document.getElementById('form-status');
+      form.addEventListener('submit', function (event) {
+        var endpoint = form.getAttribute('action');
+        event.preventDefault();
+        if (!endpoint || endpoint === '#') {
+          status.textContent = 'This form is not connected to an inbox yet, so your message was not sent.';
+          status.className = 'form-status form-status--error';
+          return;
+        }
+        var button = form.querySelector('button');
+        button.disabled = true;
+        status.textContent = 'Sending…';
+        status.className = 'form-status';
+        fetch(endpoint, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        }).then(function (response) {
+          if (!response.ok) { throw new Error('Request failed'); }
+          form.reset();
+          status.textContent = 'Thank you for your response. ✨';
+          status.className = 'form-status form-status--ok';
+        }).catch(function () {
+          status.textContent = 'Your message could not be sent. Check your connection and send it again.';
+          status.className = 'form-status form-status--error';
+        }).then(function () {
+          button.disabled = false;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
